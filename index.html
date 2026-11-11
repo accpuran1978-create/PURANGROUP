@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="only light">
 <meta name="theme-color" content="#14306b">
 <title>Puran Staff</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -29,6 +31,7 @@ iframe{border:0;width:100%;height:100%;display:block}
 <iframe id="app" src="https://script.google.com/macros/s/AKfycbxF2Ap6YlFmvvv68guhhpxWc8YW1f80UDxDGCKCgwTnNTe-IoklkCGrGINOR83qblKOTA/exec" allow="geolocation; camera" title="Puran Staff"></iframe>
 <div id="load"><img src="icon-192.png" alt=""><div>Puran Staff</div><div style="font-size:12px;opacity:.8">Loading…</div></div>
 <div id="off"><b>No internet connection</b><div>Please check mobile data / Wi-Fi.</div><button onclick="location.reload()">Try again</button></div>
+<div id="nb" style="display:none;position:fixed;left:8px;right:8px;top:8px;background:#fff;border:1px solid #ccd3df;border-radius:10px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.15);align-items:center;gap:8px;z-index:5"><span style="flex:1">🔔 Allow notifications for new work, tasks and approvals?</span><button id="nbok" style="border:0;border-radius:8px;padding:8px 12px;background:#1f5fbf;color:#fff">Allow</button><button style="border:0;border-radius:8px;padding:8px 12px;background:#eef2f8;color:#14306b" onclick="this.parentNode.style.display='none'">Later</button></div>
 <div id="inst"><span style="flex:1">Install <b>Puran Staff</b> as an app?</span><button id="ib">Install</button><button class="x" onclick="this.parentNode.style.display='none'">Later</button></div>
 <script>
 var f=document.getElementById('app'),ld=document.getElementById('load');
@@ -38,7 +41,15 @@ function net(){document.getElementById('off').style.display=navigator.onLine?'no
 window.addEventListener('online',function(){net();f.src=f.src});window.addEventListener('offline',net);net();
 var dp=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;document.getElementById('inst').style.display='flex'});
 document.getElementById('ib').onclick=function(){if(dp){dp.prompt();dp=null}document.getElementById('inst').style.display='none'};
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+var CFG={"apiKey": "AIzaSyC8UfaibtVqGl2nXNkupUJnJiMWHwsTQog", "authDomain": "puran-staff-aad17.firebaseapp.com", "projectId": "puran-staff-aad17", "storageBucket": "puran-staff-aad17.firebasestorage.app", "messagingSenderId": "282043011033", "appId": "1:282043011033:web:e2cd47d9a93705a131d3c8"},VAPID='BB2cJN0klsS0yjlzGrvI_4nIFa9FCRmC5Psc2gIDxHNCTAEwFdgH7gFBwxlYoxX68CJT9ars1qEGvEF7hTSfvB0',SRC=null,REG=null,MSG=null;
+var regP=('serviceWorker' in navigator)?navigator.serviceWorker.register('sw.js').then(function(r){REG=r;return navigator.serviceWorker.ready}).catch(function(){return null}):Promise.resolve(null);
+function fb(){if(MSG)return MSG;try{if(!firebase.apps.length)firebase.initializeApp(CFG);if(!firebase.messaging.isSupported||firebase.messaging.isSupported()){MSG=firebase.messaging();MSG.onMessage(function(p){var n=(p&&p.notification)||{};regP.then(function(r){if(r&&Notification.permission==='granted')r.showNotification(n.title||'Puran Staff',{body:n.body||'',icon:'icon-192.png',badge:'icon-192.png'})})})}}catch(e){}return MSG}
+function sendToken(){var m=fb();if(!m||!SRC)return;regP.then(function(r){if(!r)return;m.getToken({vapidKey:VAPID,serviceWorkerRegistration:REG||r}).then(function(t){if(t&&SRC)SRC.postMessage({puran:'fcm',token:t},'*')}).catch(function(){})})}
+window.addEventListener('message',function(e){var d=e.data||{};if(d.puran!=='login')return;SRC=e.source;
+ if(!('Notification' in window))return;
+ if(Notification.permission==='granted')sendToken();
+ else if(Notification.permission==='default')document.getElementById('nb').style.display='flex'});
+document.getElementById('nbok').onclick=function(){document.getElementById('nb').style.display='none';Notification.requestPermission().then(function(p){if(p==='granted')sendToken()})};
 </script>
 </body>
 </html>
