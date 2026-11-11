@@ -45,7 +45,11 @@ var CFG={"apiKey": "AIzaSyC8UfaibtVqGl2nXNkupUJnJiMWHwsTQog", "authDomain": "pur
 var regP=('serviceWorker' in navigator)?navigator.serviceWorker.register('sw.js').then(function(r){REG=r;return navigator.serviceWorker.ready}).catch(function(){return null}):Promise.resolve(null);
 function fb(){if(MSG)return MSG;try{if(!firebase.apps.length)firebase.initializeApp(CFG);if(!firebase.messaging.isSupported||firebase.messaging.isSupported()){MSG=firebase.messaging();MSG.onMessage(function(p){var n=(p&&p.notification)||{};regP.then(function(r){if(r&&Notification.permission==='granted')r.showNotification(n.title||'Puran Staff',{body:n.body||'',icon:'icon-192.png',badge:'icon-192.png'})})})}}catch(e){}return MSG}
 function sendToken(){var m=fb();if(!m||!SRC)return;regP.then(function(r){if(!r)return;m.getToken({vapidKey:VAPID,serviceWorkerRegistration:REG||r}).then(function(t){if(t&&SRC)SRC.postMessage({puran:'fcm',token:t},'*')}).catch(function(){})})}
-window.addEventListener('message',function(e){var d=e.data||{};if(d.puran!=='login')return;SRC=e.source;
+window.addEventListener('message',function(e){var d=e.data||{};
+ if(d.puran==='save'&&d.rt){try{localStorage.setItem('puran_rt',d.rt)}catch(x){}return}
+ if(d.puran==='clear'){try{localStorage.removeItem('puran_rt')}catch(x){}return}
+ if(d.puran==='hello'){var rt='';try{rt=localStorage.getItem('puran_rt')||''}catch(x){}if(rt)e.source.postMessage({puran:'rt',rt:rt},'*');return}
+ if(d.puran!=='login')return;SRC=e.source;
  if(!('Notification' in window))return;
  if(Notification.permission==='granted')sendToken();
  else if(Notification.permission==='default')document.getElementById('nb').style.display='flex'});
